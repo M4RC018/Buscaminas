@@ -93,24 +93,25 @@ public NewJFrameBuscaminas() {
             final int filaBoton = fila;
             final int columnaBoton = columna;
 
-                botones[fila][columna].addActionListener(e -> {
-                     if (partidaTerminada) {
-                         return;
-                     }
+                botones[filaBoton][columnaBoton].addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    if (!SwingUtilities.isRightMouseButton(e)
+                            || partidaTerminada
+                            || !botones[filaBoton][columnaBoton].isEnabled()) {
+                        return;
+                    }
 
-                     if (banderas[filaBoton][columnaBoton]) {
-                         return;
-                     }
+                    banderas[filaBoton][columnaBoton] =
+                            !banderas[filaBoton][columnaBoton];
 
-                     if (minas[filaBoton][columnaBoton]) {
-                         etiquetaResultado.setText("Has perdido");
-                         partidaTerminada = true;
-                         mostrarTodasLasMinas();
-                     } else {
-                         descubrirCasilla(filaBoton, columnaBoton);
-                         comprobarVictoria();
-                     }
-                 });
+                    if (banderas[filaBoton][columnaBoton]) {
+                        botones[filaBoton][columnaBoton].setText("F");
+                    } else {
+                        botones[filaBoton][columnaBoton].setText("");
+                    }
+                }
+            });
         }
     }
     
