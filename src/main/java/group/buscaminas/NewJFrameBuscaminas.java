@@ -14,8 +14,16 @@ import java.util.Random;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.SwingUtilities;
+import javax.swing.JMenuBar;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.SwingConstants;
+import javax.swing.JComboBox;
 
 public class NewJFrameBuscaminas extends javax.swing.JFrame {
+    private JMenuBar barraJuego;
+    private JMenu menuJuego;
+    private JMenu menuAyuda;
     private JPanel panelSuperior;
     private JPanel panelTablero;
     private JPanel panelInferior;
@@ -24,11 +32,14 @@ public class NewJFrameBuscaminas extends javax.swing.JFrame {
     private JLabel etiquetaResultado;
     private JButton btnReiniciar;
     private boolean partidaTerminada = false;
-    private JButton[][] botones = new JButton[10][10];
-    private boolean[][] minas = new boolean[10][10];
-    private int[][] minasAlrededor = new int[10][10];
+    private JButton[][] botones;
+    private boolean[][] minas;
+    private int[][] minasAlrededor;
     private int totalMinas = 10;
-    private boolean[][] banderas = new boolean[10][10];
+    private boolean[][] banderas;
+    private int tamanoTablero = 10;
+    private JComboBox<String> comboDificultad;
+    
     
 public NewJFrameBuscaminas() {
     setTitle("Buscaminas");
@@ -37,18 +48,66 @@ public NewJFrameBuscaminas() {
     setLocationRelativeTo(null);
 
     setLayout(new GridBagLayout());
+    
+ 
 
     panelSuperior = new JPanel();
     panelTablero = new JPanel();
     panelInferior = new JPanel();
+    
+    barraJuego = new JMenuBar();
+
+        menuJuego = new JMenu("Juego");
+       menuAyuda = new JMenu("Ayuda");
+
+       barraJuego.add(menuJuego);
+       barraJuego.add(menuAyuda);
+       setJMenuBar(barraJuego);
+
+       JMenuItem opcionReiniciar = new JMenuItem("Reiniciar");
+       menuJuego.add(opcionReiniciar);
+       opcionReiniciar.addActionListener(e -> reiniciarPartida());
+       
+       JMenu menuTamano = new JMenu("Tamaño del tablero");
+       menuJuego.add(menuTamano);
+       for (int tamano : new int[]{8, 10, 15}) {
+           JMenuItem opcionTamano = new JMenuItem(tamano + " x " + tamano);
+           opcionTamano.addActionListener(e -> cambiarTamanoTablero(tamano));
+           menuTamano.add(opcionTamano);
+       }
+
+       JMenuItem opcionAcercaDe = new JMenuItem("Acerca de");
+       menuAyuda.add(opcionAcercaDe);
+
+       opcionAcercaDe.addActionListener(e -> {
+           JFrame ventanaAyuda = new JFrame("Acerca de");
+           ventanaAyuda.setSize(300, 150);
+           ventanaAyuda.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+           ventanaAyuda.add(
+               new JLabel("Juego del Buscaminas", SwingConstants.CENTER)
+           );
+           ventanaAyuda.setLocationRelativeTo(this);
+           ventanaAyuda.setVisible(true);
+       });
+    
+    
+
 
     etiquetaTitulo = new JLabel("Buscaminas");
-    etiquetaMinas = new JLabel("Minas: 10");
+    etiquetaMinas = new JLabel("Minas: " + totalMinas);
 
     panelSuperior.setLayout(new GridBagLayout());
+    
 
     GridBagConstraints gbcEtiqueta = new GridBagConstraints();
     gbcEtiqueta.gridy = 0;
+
+    comboDificultad = new JComboBox<>(
+        new String[]{"Facil", "Media", "Dificil"}
+    );
+
+    gbcEtiqueta.gridx = 2;
+    panelSuperior.add(comboDificultad, gbcEtiqueta);
 
     gbcEtiqueta.gridx = 0;
     panelSuperior.add(etiquetaTitulo, gbcEtiqueta);
@@ -56,6 +115,22 @@ public NewJFrameBuscaminas() {
     gbcEtiqueta.gridx = 1;
     gbcEtiqueta.insets = new Insets (0,20,0,0);
     panelSuperior.add(etiquetaMinas, gbcEtiqueta);
+    
+    comboDificultad.addActionListener(e -> {
+        switch (comboDificultad.getSelectedIndex()) {
+    case 0: 
+        totalMinas = 10;
+        break;
+    case 1: 
+        totalMinas = 20;
+        break;
+    case 2: 
+        totalMinas = 30;
+        break;
+}
+            etiquetaMinas.setText("Minas: " + totalMinas);
+            reiniciarPartida();
+    });
 
     GridBagConstraints gbcPanel = new GridBagConstraints();
     gbcPanel.gridx = 0;
@@ -76,46 +151,6 @@ public NewJFrameBuscaminas() {
 
     add(panelTablero, gbcTablero);
     
-    GridBagConstraints gbcCasilla = new GridBagConstraints();
-    gbcCasilla.fill = GridBagConstraints.BOTH;
-    gbcCasilla.weightx = 1.0;
-    gbcCasilla.weighty = 1.0;
-    
-    for(int fila = 0; fila<10; fila++){
-        for(int columna = 0; columna < 10; columna++){
-            botones[fila][columna] = new JButton();
- 
-            gbcCasilla.gridx = columna;
-            gbcCasilla.gridy = fila;
-
-            panelTablero.add(botones[fila][columna], gbcCasilla);
-                
-            final int filaBoton = fila;
-            final int columnaBoton = columna;
-
-                botones[fila][columna].addActionListener(e -> {
-                     if (partidaTerminada) {
-                         return;
-                     }
-
-                     if (banderas[filaBoton][columnaBoton]) {
-                         return;
-                     }
-
-                     if (minas[filaBoton][columnaBoton]) {
-                         etiquetaResultado.setText("Has perdido");
-                         partidaTerminada = true;
-                         mostrarTodasLasMinas();
-                     } else {
-                         descubrirCasilla(filaBoton, columnaBoton);
-                         comprobarVictoria();
-                     }
-                 });
-        }
-    }
-    
-    inicializarPartida();
-    
     btnReiniciar = new JButton("Reiniciar");
     panelInferior.add(btnReiniciar);
     
@@ -130,6 +165,7 @@ public NewJFrameBuscaminas() {
     gbcInferior.fill = GridBagConstraints.HORIZONTAL;
 
     add(panelInferior, gbcInferior);
+    cambiarTamanoTablero(tamanoTablero);
     
     
 }
@@ -139,8 +175,8 @@ public NewJFrameBuscaminas() {
         int minasColocadas = 0;
         
         while(minasColocadas < totalMinas){
-            int fila = random.nextInt(10);
-            int columna = random.nextInt(10);
+            int fila = random.nextInt(tamanoTablero);
+            int columna = random.nextInt(tamanoTablero);
             
             if(!minas[fila][columna]){
                 minas[fila][columna] = true;
@@ -150,8 +186,8 @@ public NewJFrameBuscaminas() {
     }
     
     private void calcularMinasAlrededor() {
-    for (int fila = 0; fila < 10; fila++) {
-        for (int columna = 0; columna < 10; columna++) {
+    for (int fila = 0; fila < tamanoTablero; fila++) {
+        for (int columna = 0; columna < tamanoTablero; columna++) {
             int contador = 0;
 
             for (int desplazamientoFila = -1; desplazamientoFila <= 1; desplazamientoFila++) {
@@ -159,8 +195,8 @@ public NewJFrameBuscaminas() {
                     int filaVecina = fila + desplazamientoFila;
                     int columnaVecina = columna + desplazamientoColumna;
 
-                    if (filaVecina >= 0 && filaVecina < 10
-                            && columnaVecina >= 0 && columnaVecina < 10
+                    if (filaVecina >= 0 && filaVecina < tamanoTablero
+                            && columnaVecina >= 0 && columnaVecina < tamanoTablero
                             && minas[filaVecina][columnaVecina]) {
                         contador++;
                     }
@@ -178,8 +214,8 @@ public NewJFrameBuscaminas() {
 }
     
     private void mostrarTodasLasMinas() {
-    for (int fila = 0; fila < 10; fila++) {
-        for (int columna = 0; columna < 10; columna++) {
+    for (int fila = 0; fila < tamanoTablero; fila++) {
+        for (int columna = 0; columna < tamanoTablero; columna++) {
             if (minas[fila][columna]) {
                 botones[fila][columna].setText("*");
             }
@@ -190,11 +226,11 @@ public NewJFrameBuscaminas() {
 }
     
 private void descubrirCasilla(int fila, int columna) {
-    if (fila < 0 || fila >= 10 || columna < 0 || columna >= 10) {
+    if (fila < 0 || fila >= tamanoTablero || columna < 0 || columna >= tamanoTablero) {
         return;
     }
 
-    if (!botones[fila][columna].isEnabled() || minas[fila][columna]) {
+    if (!botones[fila][columna].isEnabled() || minas[fila][columna] || banderas[fila][columna]) {
         return;
     }
 
@@ -216,15 +252,15 @@ private void descubrirCasilla(int fila, int columna) {
 private void comprobarVictoria() {
     int casillasSegurasDescubiertas = 0;
 
-    for (int fila = 0; fila < 10; fila++) {
-        for (int columna = 0; columna < 10; columna++) {
+    for (int fila = 0; fila < tamanoTablero; fila++) {
+        for (int columna = 0; columna < tamanoTablero; columna++) {
             if (!minas[fila][columna] && !botones[fila][columna].isEnabled()) {
                 casillasSegurasDescubiertas++;
             }
         }
     }
 
-    if (casillasSegurasDescubiertas == 100 - totalMinas) {
+    if (casillasSegurasDescubiertas == tamanoTablero * tamanoTablero - totalMinas) {
         etiquetaResultado.setText("¡Has ganado!");
         partidaTerminada = true;
         mostrarTodasLasMinas();
@@ -235,8 +271,8 @@ private void comprobarVictoria() {
 private void reiniciarPartida() {
     partidaTerminada = false;
 
-    for (int fila = 0; fila < 10; fila++) {
-    for (int columna = 0; columna < 10; columna++) {
+    for (int fila = 0; fila < tamanoTablero; fila++) {
+    for (int columna = 0; columna < tamanoTablero; columna++) {
         minas[fila][columna] = false;
         minasAlrededor[fila][columna] = 0;
         banderas[fila][columna] = false;
@@ -250,6 +286,64 @@ private void reiniciarPartida() {
     calcularMinasAlrededor();
 
     etiquetaResultado.setText("Partida en curso");
+}
+
+private void cambiarTamanoTablero(int nuevoTamano) {
+    if (nuevoTamano < 1 || (long) nuevoTamano * nuevoTamano <= totalMinas) {
+        throw new IllegalArgumentException("El tablero debe tener más casillas que minas.");
+    }
+    tamanoTablero = nuevoTamano;
+    panelTablero.removeAll();
+    botones = new JButton[tamanoTablero][tamanoTablero];
+    minas = new boolean[tamanoTablero][tamanoTablero];
+    minasAlrededor = new int[tamanoTablero][tamanoTablero];
+    banderas = new boolean[tamanoTablero][tamanoTablero];
+    crearBotonesTablero();
+    reiniciarPartida();
+    panelTablero.revalidate();
+    panelTablero.repaint();
+}
+
+private void crearBotonesTablero() {
+    GridBagConstraints gbcCasilla = new GridBagConstraints();
+    gbcCasilla.fill = GridBagConstraints.BOTH;
+    gbcCasilla.weightx = 1.0;
+    gbcCasilla.weighty = 1.0;
+    for (int fila = 0; fila < tamanoTablero; fila++) {
+        for (int columna = 0; columna < tamanoTablero; columna++) {
+            JButton boton = new JButton();
+            botones[fila][columna] = boton;
+            gbcCasilla.gridx = columna;
+            gbcCasilla.gridy = fila;
+            panelTablero.add(boton, gbcCasilla);
+            final int filaBoton = fila;
+            final int columnaBoton = columna;
+            boton.addActionListener(e -> {
+                if (partidaTerminada || banderas[filaBoton][columnaBoton]) {
+                    return;
+                }
+                if (minas[filaBoton][columnaBoton]) {
+                    etiquetaResultado.setText("Has perdido");
+                    partidaTerminada = true;
+                    mostrarTodasLasMinas();
+                } else {
+                    descubrirCasilla(filaBoton, columnaBoton);
+                    comprobarVictoria();
+                }
+            });
+            boton.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    if (!SwingUtilities.isRightMouseButton(e)
+                            || partidaTerminada || !boton.isEnabled()) {
+                        return;
+                    }
+                    banderas[filaBoton][columnaBoton] = !banderas[filaBoton][columnaBoton];
+                    boton.setText(banderas[filaBoton][columnaBoton] ? "F" : "");
+                }
+            });
+        }
+    }
 }
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
