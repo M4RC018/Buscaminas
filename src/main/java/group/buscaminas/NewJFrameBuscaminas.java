@@ -70,11 +70,18 @@ public NewJFrameBuscaminas() {
        
        JMenu menuTamano = new JMenu("Tamaño del tablero");
        menuJuego.add(menuTamano);
-       for (int tamano : new int[]{8, 10, 15}) {
-           JMenuItem opcionTamano = new JMenuItem(tamano + " x " + tamano);
-           opcionTamano.addActionListener(e -> cambiarTamanoTablero(tamano));
-           menuTamano.add(opcionTamano);
-       }
+       
+       JMenuItem tamano8 = new JMenuItem("8x8");
+       JMenuItem tamano10 = new JMenuItem("10x10");
+       JMenuItem tamano15 = new JMenuItem("15x15");
+       
+       menuTamano.add(tamano8);
+       menuTamano.add(tamano10);
+       menuTamano.add(tamano15);
+       
+       tamano8.addActionListener(e -> cambiarTamanoTablero(8));
+       tamano10.addActionListener(e -> cambiarTamanoTablero(10));
+       tamano15.addActionListener(e -> cambiarTamanoTablero(15));
 
        JMenuItem opcionAcercaDe = new JMenuItem("Acerca de");
        menuAyuda.add(opcionAcercaDe);
